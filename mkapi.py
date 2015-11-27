@@ -117,7 +117,7 @@ def s_show_zproto_mc(klass_l, dct):
     singleton=''
     if typ == "singleton":
         typ = "method"
-        singleton="""singleton = "1" """
+        singleton=""" singleton = "1" """
     print("""    <%s name = "%s"%s>""" % (typ, dct["name"][klass_l:], singleton))
     s_show_zproto_model_arguments(dct)
     if dct["return_type"][0] != "void":
