@@ -1,15 +1,15 @@
 # licensed under MIT
 # see LICENSE
-
 from __future__ import print_function
-import sys
-from pycparser import c_parser, c_ast, parse_file
-import re
 
-__doc__ = """
-Read function and type declarations from header file and print them in zproto
-api xml model.
-"""
+import argparse
+import re
+import os
+import sys
+
+from pycparser import c_parser, c_ast, parse_file
+
+__doc__ = """Generate zproto API XML model from CLASS compatible function declarations"""
 
 def s_parse_comments_and_macros(fp):
 
@@ -227,12 +227,20 @@ def get_classes_from_decls(decls):
         seen.add(klass)
         yield klass
 
-def main(args=sys.argv):
-    if len(sys.argv) <= 1:
-        sys.exit(1)
+def main(argv=sys.argv[1:]):
 
-    filename = sys.argv[1]
-    decls = get_func_decls(filename)
+    p = argparse.ArgumentParser(description=__doc__)
+    p.add_argument("header", help="main header file of the project")
+    p.add_argument("--output", help="output directory for xml models, defaults to api.", default="api")
+    args = p.parse_args(argv)
+
+    try:
+        os.makedirs(args.output)
+    except OSError as e:
+        if e.errno != 17:   #file exists
+            raise e
+
+    decls = get_func_decls(args.header)
     #show_c_decls(decls)
     for klass in get_classes_from_decls(decls):
         comments, macros = parse_comments_and_macros("include/%s.h" % (klass, ))
