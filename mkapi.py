@@ -28,6 +28,7 @@ def s_parse_comments_and_macros(fp):
             if not interface_re.match(line):
                 continue
             is_interface = True
+            continue
 
         if end_re.match(line):
             break
