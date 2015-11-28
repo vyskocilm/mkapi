@@ -217,6 +217,14 @@ def show_zproto_model(klass, decls, comments, macros):
 
     print("</class>")
 
+def get_classes_from_decls(decls):
+    seen = set()
+    for decl_dict in decls:
+        klass = decl_dict["name"].split('_', 1)[0]
+        if klass in seen:
+            continue
+        seen.add(klass)
+        yield klass
 
 def main(args=sys.argv):
     if len(sys.argv) <= 1:
@@ -225,8 +233,9 @@ def main(args=sys.argv):
     filename = sys.argv[1]
     decls = get_func_decls(filename)
     #show_c_decls(decls)
-    comments, macros = parse_comments_and_macros ("include/myclass.h")
-    show_zproto_model("myclass", decls, comments, macros)
+    for klass in get_classes_from_decls(decls):
+        comments, macros = parse_comments_and_macros("include/%s.h" % (klass, ))
+        show_zproto_model(klass, decls, comments, macros)
 
 if __name__ == "__main__":
     main()
