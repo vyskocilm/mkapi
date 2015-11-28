@@ -194,7 +194,7 @@ def show_zproto_model(klass, decls, comments, macros):
     klass_l = len(klass) + 1
 
     for macro in macros:
-        print("""<constant name = "%s" value = "%s" >%s</constant>""" % (
+        print("""    <constant name = "%s" value = "%s" >%s</constant>\n""" % (
             macro[0][klass_l:].lower(), macro[1], macro[2]))
 
 
