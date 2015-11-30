@@ -136,7 +136,7 @@ class FuncDeclVisitor(c_ast.NodeVisitor):
         if not isinstance(node.type, c_ast.FuncDecl):
             return
         decl_dict = FuncDeclVisitor.s_decl_dict(node)
-        decl_dict["type"] = "callback"
+        decl_dict["type"] = "callback_type"
         self._ret.append(decl_dict)
 
     def generic_visit(self, node):
