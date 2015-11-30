@@ -15,6 +15,8 @@ from pycparser import c_parser, c_ast, parse_file
 __doc__ = """Generate zproto API XML model from CLASS compatible function declarations"""
 
 MacroDecl = namedtuple("MacroDecl", "name, value, comment")
+TypeDecl  = namedtuple("TypeDecl", "type, ptr")
+ArgDecl   = namedtuple("ArgDecl", "name, type, ptr")
 
 def s_parse_comments_and_macros(fp):
 
@@ -88,23 +90,24 @@ class FuncDeclVisitor(c_ast.NodeVisitor):
         for attr in ("names", "name"):
             if not hasattr(node.type, attr):
                 continue
-            return (' '.join(getattr(node.type, attr)), ptr)
+            return TypeDecl(' '.join(getattr(node.type, attr)), ptr)
         raise AttributeError("%s do not have .type.names or .type.name" % (node.__class__.__name__))
 
     @staticmethod
     def s_func_args(node):
         if node.args is None:
-            return (('', "void", ''), )
+            return (ArgDecl('', "void", ''), )
 
         ret = list()
         for idx, n in node.args.children():
             if isinstance(n, (c_ast.Decl, c_ast.Typename)):
-                ret.append((FuncDeclVisitor.s_decl_type(n.type) + (n.name, )))
+                typ, ptr = FuncDeclVisitor.s_decl_type(n.type)
+                ret.append((ArgDecl(n.name, typ, ptr)))
             elif isinstance(n, c_ast.EllipsisParam):
-                ret.append(("...", "", ""))
+                ret.append(ArgDecl("", "...", ""))
             else:
                 raise NotImplementedError("%s is not supported in s_func_args" % (n.__class__.__name__))
-        return ret
+        return tuple(ret)
 
     @staticmethod
     def s_decl_dict(node):
@@ -120,9 +123,12 @@ class FuncDeclVisitor(c_ast.NodeVisitor):
         if not isinstance (node.type, c_ast.FuncDecl):
             return
         decl_dict = FuncDeclVisitor.s_decl_dict(node)
-        typ = "method"
-        if not decl_dict["args"] or decl_dict["args"][0][2] not in ("self", "self_p"):
-            typ = "singleton"
+        typ = "singleton"
+        if  decl_dict["args"] and \
+            decl_dict["args"][0].name in ("self", "self_p") and \
+            decl_dict["args"][0].type.endswith("_t") and \
+            decl_dict["args"][0].ptr in ("*", "**"):
+            typ = "method"
         decl_dict["type"] = typ
         self._ret.append(decl_dict)
 
@@ -149,22 +155,7 @@ def get_func_decls(filename):
         v.visit(node)
     return v._ret
 
-def show_c_decls(fp, decls):
-    for decl_dict in decls:
-        if decl_dict["type"] == "callback":
-            print("[ERROR]: callback %s is not supported" % (decl_dict["name"]))
-            continue
-        print ("%(return_type)s %(name)s (%(args)s);\n" %
-                {
-                    "return_type" : ' '.join(decl_dict["return_type"]),
-                    "name" : decl_dict["name"],
-                    "args" : ', '.join(' '.join(x) for x in decl_dict["args"]),
-                    }
-                , file=fp)
-
 def s_decl_to_zproto_type(arg):
-    typ = arg[0]
-    ptr = arg[1]
     dct = {
             ("void", "*") : "anything",
             ("int", "")   : "integer",
@@ -173,19 +164,19 @@ def s_decl_to_zproto_type(arg):
             ("_Bool", "")  : "boolean",
             ("char", "*") : "string",
           }
-    if typ.endswith("_t") and ptr in ("*", "**"):
-        return typ
-    return dct.get((typ, ptr), typ)
+    if arg.type.endswith("_t") and arg.ptr in ("*", "**"):
+        return arg.type
+    return dct.get((arg.type, arg.ptr), arg.type)
 
 
 def s_show_zproto_model_arguments(fp, decl_dict):
     for arg in decl_dict["args"]:
-        if arg[2] == "self" or arg[2] == "self_p":
+        if arg.name in ("self", "self_p") and arg.type != "void":
             continue
         print("""        <argument name = "%(name)s" type = "%(type)s"%(byref)s/>""" %
-                {   "name" : arg[2],
+                {   "name" : arg.name,
                     "type" : s_decl_to_zproto_type(arg),
-                    "byref" : """ by_reference="1" """ if arg[1] == "**" else "",
+                    "byref" : """ by_reference="1" """ if arg.ptr == "**" else "",
                 }, file=fp)
 
 def s_show_zproto_mc(fp, klass_l, dct, comments):
@@ -202,7 +193,7 @@ def s_show_zproto_mc(fp, klass_l, dct, comments):
             print(comments[dct["coord"].line-i], file=fp)
 
     s_show_zproto_model_arguments(fp, dct)
-    if dct["return_type"][0] != "void":
+    if dct["return_type"].type != "void":
         print("""        <return type = "%s" />""" % (s_decl_to_zproto_type(dct["return_type"])), file=fp)
     print("""    </%s>\n""" % (typ, ), file=fp)
 
@@ -229,7 +220,7 @@ def show_zproto_model(fp, klass, decls, comments, macros):
 
 
     for decl_dict in (d for d in decls if d["coord"].file == include):
-        if decl_dict["return_type"][0] == klass + "_t":
+        if decl_dict["return_type"].type == klass + "_t":
             print("""
     <!-- Constructor is optional; default one has no arguments -->
     <constructor>
@@ -271,7 +262,6 @@ def main(argv=sys.argv[1:]):
             raise e
 
     decls = get_func_decls(args.header)
-    #show_c_decls(decls)
     for klass in get_classes_from_decls(decls):
         include = os.path.join("include", klass + ".h")
         if not os.path.exists(include):
