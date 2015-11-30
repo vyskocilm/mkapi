@@ -123,7 +123,7 @@ def get_func_decls(filename):
         v.visit(node)
     return v._ret
 
-def show_c_decls(decls):
+def show_c_decls(fp, decls):
     for decl_dict in decls:
         if decl_dict["type"] == "callback":
             print("[ERROR]: callback %s is not supported" % (decl_dict["name"]))
@@ -134,7 +134,7 @@ def show_c_decls(decls):
                     "name" : decl_dict["name"],
                     "args" : ', '.join(' '.join(x) for x in decl_dict["args"]),
                     }
-                )
+                , file=fp)
 
 def s_decl_to_zproto_type(arg):
     typ = arg[0]
@@ -152,7 +152,7 @@ def s_decl_to_zproto_type(arg):
     return dct.get((typ, ptr), typ)
 
 
-def s_show_zproto_model_arguments(decl_dict):
+def s_show_zproto_model_arguments(fp, decl_dict):
     for arg in decl_dict["args"]:
         if arg[2] == "self" or arg[2] == "self_p":
             continue
@@ -160,28 +160,28 @@ def s_show_zproto_model_arguments(decl_dict):
                 {   "name" : arg[2],
                     "type" : s_decl_to_zproto_type(arg),
                     "byref" : """by_reference="1""" if arg[1] == "**" else "",
-                })
+                }, file=fp)
 
-def s_show_zproto_mc(klass_l, dct, comments):
+def s_show_zproto_mc(fp, klass_l, dct, comments):
     """Show method or callback_type - they're mostly the same except tag name"""
     typ = dct["type"]
     singleton=''
     if typ == "singleton":
         typ = "method"
         singleton=""" singleton = "1" """
-    print("""    <%s name = "%s"%s>""" % (typ, dct["name"][klass_l:], singleton))
+    print("""    <%s name = "%s"%s>""" % (typ, dct["name"][klass_l:], singleton), file=fp)
 
     for i in range(3):
         if dct["coord"].line -i in comments:
-            print(comments[dct["coord"].line-i])
+            print(comments[dct["coord"].line-i], file=fp)
 
-    s_show_zproto_model_arguments(dct)
+    s_show_zproto_model_arguments(fp, dct)
     if dct["return_type"][0] != "void":
-        print("""        <return type = "%s" />""" % (s_decl_to_zproto_type(dct["return_type"])))
-    print("""    </%s>\n""" % (typ, ))
+        print("""        <return type = "%s" />""" % (s_decl_to_zproto_type(dct["return_type"])), file=fp)
+    print("""    </%s>\n""" % (typ, ), file=fp)
 
 
-def show_zproto_model(klass, decls, comments, macros):
+def show_zproto_model(fp, klass, decls, comments, macros):
     print("""
 <!--
     This model defines a public API for binding.
@@ -189,13 +189,13 @@ def show_zproto_model(klass, decls, comments, macros):
 <class name = "%s" >
 
     <include filename = "../license.xml" />
-    """ % (klass, ))
+    """ % (klass, ), file=fp)
 
     klass_l = len(klass) + 1
 
     for macro in macros:
         print("""    <constant name = "%s" value = "%s" >%s</constant>\n""" % (
-            macro[0][klass_l:].lower(), macro[1], macro[2]))
+            macro[0][klass_l:].lower(), macro[1], macro[2]), file=fp)
 
 
     for decl_dict in decls:
@@ -203,20 +203,20 @@ def show_zproto_model(klass, decls, comments, macros):
             print("""
     <!-- Constructor is optional; default one has no arguments -->
     <constructor>
-        Create a new %s""" % (klass, ))
-            s_show_zproto_model_arguments(decl_dict)
-            print("""    </constructor>""")
+        Create a new %s""" % (klass, ), file=fp)
+            s_show_zproto_model_arguments(fp, decl_dict)
+            print("""    </constructor>""", file=fp)
             continue
 
         if decl_dict["name"] == klass + "_destroy":
             print("""
     <!-- Destructor is optional; default one follows standard style -->
-    <destructor />\n""")
+    <destructor />\n""", file=fp)
             continue
 
-        s_show_zproto_mc(klass_l, decl_dict, comments)
+        s_show_zproto_mc(fp, klass_l, decl_dict, comments)
 
-    print("</class>")
+    print("</class>", file=fp)
 
 def get_classes_from_decls(decls):
     seen = set()
@@ -243,8 +243,15 @@ def main(argv=sys.argv[1:]):
     decls = get_func_decls(args.header)
     #show_c_decls(decls)
     for klass in get_classes_from_decls(decls):
-        comments, macros = parse_comments_and_macros("include/%s.h" % (klass, ))
-        show_zproto_model(klass, decls, comments, macros)
+        include = os.path.join("include", klass + ".h")
+        if not os.path.exists(include):
+            print("E: '%s' does not exists, skipping" % (include, ))
+            continue
+        comments, macros = parse_comments_and_macros(include)
+
+        model = os.path.join(args.output, klass + ".xml")
+        with open(model, 'wt') as fp:
+            show_zproto_model(fp, klass, decls, comments, macros)
 
 if __name__ == "__main__":
     main()
