@@ -185,7 +185,7 @@ def s_show_zproto_model_arguments(fp, decl_dict):
         print("""        <argument name = "%(name)s" type = "%(type)s"%(byref)s/>""" %
                 {   "name" : arg[2],
                     "type" : s_decl_to_zproto_type(arg),
-                    "byref" : """by_reference="1""" if arg[1] == "**" else "",
+                    "byref" : """ by_reference="1" """ if arg[1] == "**" else "",
                 }, file=fp)
 
 def s_show_zproto_mc(fp, klass_l, dct, comments):
