@@ -218,6 +218,7 @@ def show_zproto_model(fp, klass, decls, comments, macros):
     """ % (klass, ), file=fp)
 
     klass_l = len(klass) + 1
+    include = os.path.join("include", klass + ".h")
 
     for macro_decl in macros:
         print("""    <constant name = "%s" value = %s >%s</constant>\n""" % (
@@ -227,7 +228,7 @@ def show_zproto_model(fp, klass, decls, comments, macros):
             file=fp)
 
 
-    for decl_dict in decls:
+    for decl_dict in (d for d in decls if d["coord"].file == include):
         if decl_dict["return_type"][0] == klass + "_t":
             print("""
     <!-- Constructor is optional; default one has no arguments -->
