@@ -34,8 +34,13 @@ def s_parse_comments_and_macros(fp):
             break
 
         if macro_re.match(line):
-            _, name, value, comment = line.split(' ', 3)
-            macros.append((name, value, comment.strip()[3:]))
+            try:
+                _, name, value, comment = line.split(' ', 3)
+                comment = comment.strip()[3:]
+            except ValueError:
+                _, name, value = line.split(' ', 2)
+                comment = ""
+            macros.append((name, value, comment))
             continue
 
         if line.startswith("//"):
@@ -74,14 +79,26 @@ class FuncDeclVisitor(c_ast.NodeVisitor):
             ptr = ptr + '*'
             node = node.type
 
-        return (' '.join(node.type.names), ptr)
+        for attr in ("names", "name"):
+            if not hasattr(node.type, attr):
+                continue
+            return (' '.join(getattr(node.type, attr)), ptr)
+        raise AttributeError("%s do not have .type.names or .type.name" % (node.__class__.__name__))
 
     @staticmethod
     def s_func_args(node):
         if node.args is None:
             return (('', "void", ''), )
-        return [FuncDeclVisitor.s_decl_type(node.type) + (node.name, )
-                for idx, node in node.args.children()]
+
+        ret = list()
+        for idx, n in node.args.children():
+            if isinstance(n, (c_ast.Decl, c_ast.Typename)):
+                ret.append((FuncDeclVisitor.s_decl_type(n.type) + (n.name, )))
+            elif isinstance(n, c_ast.EllipsisParam):
+                ret.append(("...", "", ""))
+            else:
+                raise NotImplementedError("%s is not supported in s_func_args" % (n.__class__.__name__))
+        return ret
 
     @staticmethod
     def s_decl_dict(node):
