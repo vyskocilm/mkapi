@@ -117,7 +117,10 @@ class FuncDeclVisitor(c_ast.NodeVisitor):
 
 
 def get_func_decls(filename):
-    ast = parse_file(filename, use_cpp=True)
+    ast = parse_file(filename,
+            use_cpp=True,
+            cpp_path=os.path.join(os.path.dirname(__file__), "fake_cpp"),
+            cpp_args="-I/usr/share/python-pycparser/fake_libc_include/")
     v = FuncDeclVisitor()
     for idx, node in ast.children():
         v.visit(node)
