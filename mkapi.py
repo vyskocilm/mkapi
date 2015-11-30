@@ -7,9 +7,14 @@ import re
 import os
 import sys
 
+from collections import namedtuple
+from xml.sax.saxutils import quoteattr as s_xml_quoteattr
+
 from pycparser import c_parser, c_ast, parse_file
 
 __doc__ = """Generate zproto API XML model from CLASS compatible function declarations"""
+
+MacroDecl = namedtuple("MacroDecl", "name, value, comment")
 
 def s_parse_comments_and_macros(fp):
 
@@ -39,8 +44,9 @@ def s_parse_comments_and_macros(fp):
                 comment = comment.strip()[3:]
             except ValueError:
                 _, name, value = line.split(' ', 2)
+                value = value.strip()
                 comment = ""
-            macros.append((name, value, comment))
+            macros.append(MacroDecl(name, value, comment))
             continue
 
         if line.startswith("//"):
@@ -213,9 +219,12 @@ def show_zproto_model(fp, klass, decls, comments, macros):
 
     klass_l = len(klass) + 1
 
-    for macro in macros:
-        print("""    <constant name = "%s" value = "%s" >%s</constant>\n""" % (
-            macro[0][klass_l:].lower(), macro[1], macro[2]), file=fp)
+    for macro_decl in macros:
+        print("""    <constant name = "%s" value = %s >%s</constant>\n""" % (
+            macro_decl.name[klass_l:].lower(),
+            s_xml_quoteattr(macro_decl.value),
+            macro_decl.comment),
+            file=fp)
 
 
     for decl_dict in decls:
