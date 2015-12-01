@@ -243,7 +243,11 @@ def show_zproto_model(fp, klass, decls, comments, macros):
 def get_classes_from_decls(decls):
     seen = set()
     for decl_dict in decls:
-        klass = decl_dict["name"].split('_', 1)[0]
+        name = decl_dict["name"]
+        klass = name[:name.rfind('_')]
+        include = os.path.join("include", klass + ".h")
+        if not os.path.exists(include):
+            continue
         if klass in seen:
             continue
         seen.add(klass)
@@ -265,9 +269,6 @@ def main(argv=sys.argv[1:]):
     decls = get_func_decls(args.header)
     for klass in get_classes_from_decls(decls):
         include = os.path.join("include", klass + ".h")
-        if not os.path.exists(include):
-            print("E: '%s' does not exists, skipping" % (include, ))
-            continue
         comments, macros = parse_comments_and_macros(include)
 
         model = os.path.join(args.output, klass + ".xml")
