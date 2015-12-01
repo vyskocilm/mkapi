@@ -71,7 +71,7 @@ def cmp_xml(orig, new):
             new,
             ignore = IGNORE_TEXT)
 
-    for orig_n in root_orig.find("callback_type"):
+    for orig_n in root_orig.findall("callback_type"):
         new_n = s_find_new(root_new, "callback_type", orig_n)
         s_cmp_element(
                 orig_n,
