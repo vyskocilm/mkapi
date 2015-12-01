@@ -45,11 +45,11 @@ def s_cmp_element(orig, new, orig_f, new_f, ignore=0):
             print("Error in processing file '%s', tag: '%s'" % (
                 os.path.basename(orig_f), orig.tag), file=sys.stderr)
 
-def s_find_new(new, nodes_new_find, orig):
-    for new in new.find(nodes_new_find):
+def s_find_new(root, nodes_new_find, orig):
+    for new in root.findall(nodes_new_find):
         if new.tag == orig.tag and new.get("name") == orig.get("name"):
             return new
-    raise ValueError("<%s name='%s' /> not found in new nodes" % (node.tag, node.get("name")))
+    raise ValueError("<%s name='%s' /> not found in new nodes" % (nodes_new_find, orig.get("name")))
 
 def cmp_xml(orig, new):
     try:
@@ -72,7 +72,11 @@ def cmp_xml(orig, new):
             ignore = IGNORE_TEXT)
 
     for orig_n in root_orig.findall("callback_type"):
-        new_n = s_find_new(root_new, "callback_type", orig_n)
+        try:
+            new_n = s_find_new(root_new, "callback_type", orig_n)
+        except ValueError as ve:
+            print("Error reading '%s': %s" % (orig, ve))
+            raise ve
         s_cmp_element(
                 orig_n,
                 new_n,
