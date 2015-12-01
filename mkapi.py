@@ -140,11 +140,6 @@ class FuncDeclVisitor(c_ast.NodeVisitor):
         decl_dict["type"] = "callback_type"
         self._ret.append(decl_dict)
 
-    def generic_visit(self, node):
-        print('[GENERIC]: %s\n' % (node.__class__))
-        node.show()
-        print('\n')
-
 
 def get_func_decls(filename):
     ast = parse_file(filename,
