@@ -1,6 +1,8 @@
 # test for mkapi.py script
 # use py.test from root directory to run it
 
+from __future__ import print_function
+
 import glob
 import os
 import shutil
