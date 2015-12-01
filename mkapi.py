@@ -161,7 +161,7 @@ def s_decl_to_zproto_type(arg):
             ("char", "*") : "string",
           }
     if arg.type.endswith("_t") and arg.ptr in ("*", "**"):
-        return arg.type
+        return arg.type[:-2]
     return dct.get((arg.type, arg.ptr), arg.type)
 
 
