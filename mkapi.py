@@ -9,6 +9,7 @@ import sys
 
 from collections import namedtuple
 from xml.sax.saxutils import quoteattr as s_xml_quoteattr
+from xml.sax.saxutils import escape as s_xml_escape
 
 from pycparser import c_parser, c_ast, parse_file
 
@@ -190,7 +191,7 @@ def s_show_zproto_mc(fp, klass_l, dct, comments):
 
     for i in range(3):
         if dct["coord"].line -i in comments:
-            print(comments[dct["coord"].line-i], file=fp)
+            print(s_xml_escape(comments[dct["coord"].line-i]), file=fp)
 
     s_show_zproto_model_arguments(fp, dct)
     if dct["return_type"].type != "void":
