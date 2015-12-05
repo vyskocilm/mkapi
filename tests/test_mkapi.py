@@ -46,8 +46,9 @@ def s_cmp_element(orig, new, orig_f, new_f, ignore=0):
                 os.path.basename(orig_f), orig.tag), file=sys.stderr)
 
 def s_find_new(root, nodes_new_find, orig):
+    orig_name = orig.get("name").replace(' ', '_')
     for new in root.findall(nodes_new_find):
-        if new.tag == orig.tag and new.get("name") == orig.get("name"):
+        if new.tag == orig.tag and new.get("name") == orig_name:
             return new
     raise ValueError("<%s name='%s' /> not found in new nodes" % (nodes_new_find, orig.get("name")))
 
