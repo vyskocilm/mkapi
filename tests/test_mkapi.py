@@ -71,17 +71,20 @@ def cmp_xml(orig, new):
             new,
             ignore = IGNORE_TEXT)
 
-    for orig_n in root_orig.findall("callback_type"):
-        try:
-            new_n = s_find_new(root_new, "callback_type", orig_n)
-        except ValueError as ve:
-            print("Error reading '%s': %s" % (orig, ve))
-            raise ve
-        s_cmp_element(
-                orig_n,
-                new_n,
-                orig,
-                new)
+    for name in ("callback_type", "method"):
+        for orig_n in root_orig.findall(name):
+            if orig_n.get("exclude") == "1":
+                continue
+            try:
+                new_n = s_find_new(root_new, name, orig_n)
+            except ValueError as ve:
+                print("Error reading '%s': %s" % (orig, ve))
+                raise ve
+            s_cmp_element(
+                    orig_n,
+                    new_n,
+                    orig,
+                    new)
 
 def test_mkapi():
     oldcwd = os.getcwdu()
