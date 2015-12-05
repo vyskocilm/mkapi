@@ -44,6 +44,7 @@ def s_cmp_element(orig, new, orig_f, new_f, ignore=0):
         except AssertionError as ae:
             print("Error in processing file '%s', tag: '%s' name = '%s'" % (
                 os.path.basename(orig_f), orig.tag, orig.get("name")), file=sys.stderr)
+            raise ae
 
 def s_find_new(root, nodes_new_find, orig):
     orig_name = orig.get("name").replace(' ', '_')
