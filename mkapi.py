@@ -216,7 +216,7 @@ def show_zproto_model(fp, klass, decls, comments, macros):
 
 
     for decl_dict in (d for d in decls if d["coord"].file == include):
-        if decl_dict["return_type"].type == klass + "_t":
+        if decl_dict["name"] == klass + "_new":
             print("""
     <!-- Constructor is optional; default one has no arguments -->
     <constructor>
