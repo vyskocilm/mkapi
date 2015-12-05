@@ -32,8 +32,8 @@ def s_cmp_element(orig, new, orig_f, new_f, ignore=0):
         try:
             assert(c(orig_value) == new_value)
         except AssertionError as ae:
-            print("Error in processing file '%s', tag: '%s'" % (
-                os.path.basename(orig_f), orig.tag), file=sys.stderr)
+            print("Error in processing file '%s', tag: '%s' name = '%s'" % (
+                os.path.basename(orig_f), orig.tag, orig.get("name")), file=sys.stderr)
             raise ae
 
     if (ignore & IGNORE_TEXT != IGNORE_TEXT):
@@ -42,8 +42,8 @@ def s_cmp_element(orig, new, orig_f, new_f, ignore=0):
         try:
             assert(orig.text.strip() == new.text.strip())
         except AssertionError as ae:
-            print("Error in processing file '%s', tag: '%s'" % (
-                os.path.basename(orig_f), orig.tag), file=sys.stderr)
+            print("Error in processing file '%s', tag: '%s' name = '%s'" % (
+                os.path.basename(orig_f), orig.tag, orig.get("name")), file=sys.stderr)
 
 def s_find_new(root, nodes_new_find, orig):
     orig_name = orig.get("name").replace(' ', '_')
