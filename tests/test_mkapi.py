@@ -5,6 +5,7 @@ from __future__ import print_function
 
 import glob
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -24,6 +25,13 @@ def c(text):
 
 IGNORE_TEXT = 0x01
 
+WHSPC_RE = re.compile(r'\W+')
+DESTROY_COMMENT_RE = re.compile(r'The caller is responsible for destroying the return value when finished with it')
+def s_strip(text):
+    ret = re.sub(WHSPC_RE, ' ', text)
+    ret = re.sub(DESTROY_COMMENT_RE, '', ret)
+    return ret.strip()
+
 def s_cmp_element(orig, new, orig_f, new_f, ignore=0):
 
     assert(orig.tag == new.tag)
@@ -40,10 +48,11 @@ def s_cmp_element(orig, new, orig_f, new_f, ignore=0):
         if orig.text is None and new.text is None:
             return
         try:
-            assert(orig.text.strip() == new.text.strip())
+            assert(s_strip(orig.text) == s_strip(new.text))
         except AssertionError as ae:
             print("Error in processing file '%s', tag: '%s' name = '%s'" % (
                 os.path.basename(orig_f), orig.tag, orig.get("name")), file=sys.stderr)
+            import pdb; pdb.set_trace()
             raise ae
 
 def s_find_new(root, nodes_new_find, orig):
