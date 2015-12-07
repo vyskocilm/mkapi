@@ -128,7 +128,7 @@ class FuncDeclVisitor(c_ast.NodeVisitor):
         if  decl_dict["args"] and \
             decl_dict["args"][0].name in ("self", "self_p") and \
             decl_dict["args"][0].type.endswith("_t") and \
-            decl_dict["args"][0].ptr in ("*", "**"):
+            decl_dict["args"][0].ptr == "*":
             typ = "method"
         decl_dict["type"] = typ
         self._ret.append(decl_dict)

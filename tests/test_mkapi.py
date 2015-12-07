@@ -36,12 +36,13 @@ def s_cmp_element(orig, new, orig_f, new_f, ignore=0):
 
     assert(orig.tag == new.tag)
     for (orig_key, orig_value), (new_key, new_value) in zip(orig.items(), new.items()):
-        assert(orig_key == new_key)
         try:
+            assert(orig_key == new_key)
             assert(c(orig_value) == new_value)
         except AssertionError as ae:
             print("Error in processing file '%s', tag: '%s' name = '%s'" % (
                 os.path.basename(orig_f), orig.tag, orig.get("name")), file=sys.stderr)
+            print ("orig.items(): %s, new.items(): %s" % (orig.items(), new.items()))
             raise ae
 
     if (ignore & IGNORE_TEXT != IGNORE_TEXT):
