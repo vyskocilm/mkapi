@@ -140,12 +140,27 @@ class FuncDeclVisitor(c_ast.NodeVisitor):
         decl_dict["type"] = "callback_type"
         self._ret.append(decl_dict)
 
+def s_cpp_args(args):
+    cpp_args = list()
+    try:
+        for d in args.DEFINE:
+            cpp_args.append("-D" + d)
+    except TypeError:
+        pass
 
-def get_func_decls(filename):
+    try:
+        for d in args.INCLUDE:
+            cpp_args.append("-I" + d)
+    except TypeError:
+        pass
+    return cpp_args
+
+def get_func_decls(filename, args):
+    cpp_args = s_cpp_args(args)
     ast = parse_file(filename,
             use_cpp=True,
             cpp_path=os.path.join(os.path.dirname(__file__), "fake_cpp"),
-            cpp_args="-I/usr/share/python-pycparser/fake_libc_include/")
+            cpp_args=cpp_args)
     v = FuncDeclVisitor()
     for idx, node in ast.children():
         v.visit(node)
@@ -253,6 +268,8 @@ def main(argv=sys.argv[1:]):
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("header", help="main header file of the project")
     p.add_argument("--output", help="output directory for xml models, defaults to api.", default="api")
+    p.add_argument("-D", "--define", help="", dest="DEFINE", action='append')
+    p.add_argument("-I", "--include", help="", dest="INCLUDE", action='append')
     args = p.parse_args(argv)
 
     try:
@@ -261,7 +278,7 @@ def main(argv=sys.argv[1:]):
         if e.errno != 17:   #file exists
             raise e
 
-    decls = get_func_decls(args.header)
+    decls = get_func_decls(args.header, args)
     for klass in get_classes_from_decls(decls):
         include = os.path.join("include", klass + ".h")
         comments, macros = parse_comments_and_macros(include)

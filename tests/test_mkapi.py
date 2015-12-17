@@ -16,9 +16,17 @@ def mkapi():
     if not os.path.exists("../../mkapi.py"):
         raise NotImplementedError("../../mkkapi.py does not exists, and custom location are not supported!")
 
+    args = ["python", "../../mkapi.py"]
+
+    for p in ("fake_libc_include", "/usr/share/python-pycparser/fake_libc_include/"):
+        if os.path.isdir(p):
+            args.append("-I" + p)
+            break
+
     if os.path.isdir("api"):
         shutil.rmtree("api")
-    subprocess.check_call(["python", "../../mkapi.py", "include/czmq.h"])
+    args.append("include/czmq.h")
+    subprocess.check_call(args)
 
 def c(text):
     return text.replace(' ', '_')
