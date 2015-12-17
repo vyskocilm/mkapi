@@ -35,15 +35,25 @@ def s_strip(text):
 def s_cmp_element(orig, new, orig_f, new_f, ignore=0):
 
     assert(orig.tag == new.tag)
-    for (orig_key, orig_value), (new_key, new_value) in zip(orig.items(), new.items()):
-        try:
-            assert(orig_key == new_key)
-            assert(c(orig_value) == new_value)
-        except AssertionError as ae:
-            print("Error in processing file '%s', tag: '%s' name = '%s'" % (
-                os.path.basename(orig_f), orig.tag, orig.get("name")), file=sys.stderr)
-            print ("orig.items(): %s, new.items(): %s" % (orig.items(), new.items()))
-            raise ae
+
+    orig_dict = dict( (k, c(v)) for k, v in orig.items() )
+    new_dict = dict(new.items())
+
+    # accrding ML the semantics is not clear, so ignore it in the test
+    if "polymorphic" in orig_dict:
+        orig_dict["singleton"] = "1"
+        del orig_dict["polymorphic"]
+    if "polymorphic" in new_dict:
+        new_dict["singleton"] == "1"
+        del orig_dict["polymorphic"]
+
+    try:
+        assert(orig_dict == new_dict)
+    except AssertionError as ae:
+        print("Error in processing file '%s', tag: '%s' name = '%s'" % (
+            os.path.basename(orig_f), orig.tag, orig.get("name")), file=sys.stderr)
+        print ("orig.items(): %s, new.items(): %s" % (orig, new))
+        raise ae
 
     if (ignore & IGNORE_TEXT != IGNORE_TEXT):
         if orig.text is None and new.text is None:
