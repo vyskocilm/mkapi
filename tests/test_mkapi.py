@@ -7,26 +7,27 @@ import glob
 import os
 import re
 import shutil
-import subprocess
 import sys
 
 from xml.etree import ElementTree as ET
 
+sys.path.insert(0, os.getcwd())
+from mkapi import main
+
 def mkapi():
-    if not os.path.exists("../../mkapi.py"):
-        raise NotImplementedError("../../mkkapi.py does not exists, and custom location are not supported!")
 
-    args = ["python", "../../mkapi.py"]
+    args = list()
 
-    for p in ("fake_libc_include", "/usr/share/python-pycparser/fake_libc_include/"):
+    for p in ("pycparser", os.getcwd(), "/usr/share/python-pycparser/"):
+        p = os.path.join(p, "fake_libc_include")
         if os.path.isdir(p):
-            args.append("-I" + p)
+            args.extend(("-I",  p))
             break
 
     if os.path.isdir("api"):
         shutil.rmtree("api")
     args.append("include/czmq.h")
-    subprocess.check_call(args)
+    main(args)
 
 def c(text):
     return text.replace(' ', '_')
