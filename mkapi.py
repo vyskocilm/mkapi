@@ -267,10 +267,11 @@ def main(argv=sys.argv[1:]):
 
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("header", help="main header file of the project")
-    p.add_argument("--output", help="output directory for xml models, defaults to api.", default="api")
     p.add_argument("-D", "--define", help="", dest="DEFINE", action='append')
     p.add_argument("-I", "--include", help="", dest="INCLUDE", action='append')
     args = p.parse_args(argv)
+
+    args.output = "api"
 
     try:
         os.makedirs(args.output)
