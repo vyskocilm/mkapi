@@ -119,7 +119,7 @@ def cmp_xml(orig, new):
 
 def test_mkapi():
     oldcwd = os.getcwdu()
-    os.chdir("tests/fixtures")
+    os.chdir("tests/czmq")
 
     mkapi()
     for orig in glob.glob("api.orig/*.xml"):
