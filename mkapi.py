@@ -199,9 +199,14 @@ def s_decl_to_zproto_type(arg):
 
 
 def s_show_zproto_model_arguments(fp, decl_dict):
+    was_format = False
     for arg in decl_dict["args"]:
         if arg.name in ("self", "self_p") and arg.type != "void":
             continue
+        if was_format and arg.type == "...":
+            continue
+        if arg.name == "format" and arg.type == "char" and arg.ptr == "*":
+            was_format = True
         print("""        <argument name = "%(name)s" type = "%(type)s"%(byref)s/>""" %
                 {   "name" : arg.name,
                     "type" : s_decl_to_zproto_type(arg),
