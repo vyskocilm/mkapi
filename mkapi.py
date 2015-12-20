@@ -120,6 +120,20 @@ class FuncDeclVisitor(c_ast.NodeVisitor):
                     }
         return decl_dict
 
+    @staticmethod
+    def s_enum_items(enumerators):
+        return [MacroDecl(n.name, n.value.value, "") for n in enumerators if n.value is not None]
+
+    @staticmethod
+    def s_enum_dict(node):
+        decl_dict = {
+                "type" : "enum",
+                "name" : node.name,
+                "items" : FuncDeclVisitor.s_enum_items(node.type.type.values.enumerators),
+                "coord" : node.coord
+        }
+        return decl_dict
+
     def visit_Decl(self, node):
         if not isinstance (node.type, c_ast.FuncDecl):
             return
@@ -134,11 +148,15 @@ class FuncDeclVisitor(c_ast.NodeVisitor):
         self._ret.append(decl_dict)
 
     def visit_Typedef(self, node):
-        if not isinstance(node.type, c_ast.FuncDecl):
+        if isinstance(node.type, c_ast.FuncDecl):
+            decl_dict = FuncDeclVisitor.s_decl_dict(node)
+            decl_dict["type"] = "callback_type"
+            self._ret.append(decl_dict)
             return
-        decl_dict = FuncDeclVisitor.s_decl_dict(node)
-        decl_dict["type"] = "callback_type"
-        self._ret.append(decl_dict)
+        elif isinstance(node.type.type, c_ast.Enum):
+            decl_dict = FuncDeclVisitor.s_enum_dict(node)
+            self._ret.append(decl_dict)
+            return
 
 def s_cpp_args(args):
     cpp_args = list()
@@ -209,6 +227,13 @@ def s_show_zproto_mc(fp, klass_l, dct, comments):
     print("""    </%s>\n""" % (typ, ), file=fp)
 
 
+def s_show_zproto_enum(fp, klass_l, decl_dict):
+    print("""    <enum name="%s">""" % (decl_dict["name"][klass_l:-2].lower()), file=fp)
+    for name, value, comment in decl_dict["items"]:
+        name = name[klass_l:].lower()
+        print ("""        <constant name="%s" value="%s" />""" % (name, value), file=fp)
+    print("""    </enum>""", file=fp)
+
 def show_zproto_model(fp, klass, decls, comments, macros):
     print("""
 <!--
@@ -231,6 +256,11 @@ def show_zproto_model(fp, klass, decls, comments, macros):
 
 
     for decl_dict in (d for d in decls if d["coord"].file == include):
+
+        if decl_dict["type"] == "enum":
+            s_show_zproto_enum(fp, klass_l, decl_dict)
+            continue
+
         if decl_dict["name"] == klass + "_new":
             print("""
     <!-- Constructor is optional; default one has no arguments -->
