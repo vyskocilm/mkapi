@@ -6,8 +6,8 @@ Create zproject api models from header files declarations.
 
 ## How to use
 
-mkapi.py needs pycparser [https://github.com/eliben/pycparser/] with `fake_libc_include`, the git master version is recommended for parsing czmq.h.
+`mkapi.py` needs [https://github.com/eliben/pycparser/|pycparser] installed. Use your package manager or pip to install it.
 
-Usage is simple - from root dir of zproject project run python `/path/to/mkapi.py -I/path/to/fake_libc_include include/main.h`. Result models will be in api/ directory.
+Test of functionality is done on headers from [https://github.com/zeromq/czmq/|czmq]. In order to make it work, you need [https://github.com/eliben/pycparser/tree/master/utils/fake_libc_include|fake_libc_include], which adds necessary declarations. However `fake_libc_include` is not a part of Python packages.
 
-For test you need to use py.test and run it from root directory. Tests will analyze czmq.h, put results to tests/czmq/api/ and compare results with tests/czmq/api.orig/
+Usage is simple. Change dir to `tests/czmq` and run `python ../../mkapi.py -I/path/to/fake_libc_include include/czmq.h`. Result models will be in `api/` directory.
